@@ -99,18 +99,23 @@ fn main() {
 }
 
 fn get_csproduct_uuid() -> String {
-    // Get the UUID of the machine
-    // wmic csproduct get UUID
-    let output = Command::new("wmic")
-        .args(&["csproduct", "get", "UUID"])
+    let output = Command::new("powershell")
+        .args([
+            "-NoProfile",
+            "-Command",
+            "(Get-CimInstance Win32_ComputerSystemProduct).UUID",
+        ])
         .output()
-        .expect("Failed to execute command");
+        .expect("Failed to execute PowerShell");
+
+    if !output.status.success() {
+        panic!(
+            "PowerShell failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
 
     String::from_utf8_lossy(&output.stdout)
-        .to_string()
-        .lines()
-        .nth(1)
-        .unwrap_or("")
         .trim()
         .to_string()
 }
